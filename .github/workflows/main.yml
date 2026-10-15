@@ -2,12 +2,6 @@ name: GAME SERVER
 
 on:
   workflow_dispatch:
-    inputs:
-      duration:
-        description: 'Thời gian chạy (phút)'
-        type: choice
-        default: '340'
-        options: ['60', '180', '340']
 
 permissions:
   contents: read
@@ -22,7 +16,7 @@ env:
 jobs:
   game:
     runs-on: windows-latest
-    timeout-minutes: 355
+    timeout-minutes: 360
 
     steps:
       - name: Setup RDP + user
@@ -99,20 +93,13 @@ jobs:
             '## Game', $f, "$($env:TAILSCALE_IP):$($env:GAME_PORT)", $f
           ) | Add-Content $env:GITHUB_STEP_SUMMARY
 
-          $end = (Get-Date).AddMinutes([int]'${{ inputs.duration }}')
-          $idleLimit = 30
-          $lastActive = Get-Date
+          $end = (Get-Date).AddMinutes(350)
 
           while ((Get-Date) -lt $end) {
             if ((Get-Service TermService).Status -ne 'Running') { Start-Service TermService }
 
             $n = @(Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue |
               Where-Object { $_.LocalPort -in 3389, [int]$env:GAME_PORT }).Count
-            if ($n -gt 0) { $lastActive = Get-Date }
-
-            if (((Get-Date) - $lastActive).TotalMinutes -ge $idleLimit) {
-              Write-Host "Idle $idleLimit phút, kết thúc."; break
-            }
             Write-Host ("[{0:HH:mm}] Kết nối: {1} | Còn: {2:N0} phút" -f (Get-Date), $n, ($end - (Get-Date)).TotalMinutes)
             Start-Sleep 300
           }
