@@ -14,9 +14,15 @@ jobs:
     steps:
       - name: Configure Core RDP Settings
         run: |
-          # Bật Remote Desktop (giữ NLA mặc định để an toàn hơn)
+          # Bật Remote Desktop
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' `
                            -Name "fDenyTSConnections" -Value 0 -Force
+
+          # Tắt NLA như bản gốc (bản gốc của bạn vào được với cấu hình này)
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' `
+                           -Name "UserAuthentication" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' `
+                           -Name "SecurityLayer" -Value 0 -Force
 
           # Xóa rule cũ cùng tên để tránh trùng
           netsh advfirewall firewall delete rule name="RDP-Tailscale" | Out-Null
